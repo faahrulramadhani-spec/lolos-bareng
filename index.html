@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Lolos Bareng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0F1221;color:#F0F4FF;font-family:'Plus Jakarta Sans',system-ui,sans-serif;min-height:100dvh;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:0;background:transparent}
+input{font-family:inherit}
+
+/* Loading overlay */
+#loading{position:fixed;inset:0;background:#0F1221;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;transition:opacity .3s}
+#loading.hide{opacity:0;pointer-events:none}
+.spinner{width:40px;height:40px;border-radius:50%;border:3px solid #1E2440;border-top-color:#6C63FF;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1E2440;border:1px solid #2E3460;color:#F0F4FF;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:998;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* Layout */
+#app{display:flex;flex-direction:column;min-height:100dvh;max-width:600px;margin:0 auto}
+
+/* Topbar */
+.topbar{position:sticky;top:0;z-index:10;background:rgba(15,18,33,0.9);backdrop-filter:blur(12px);border-bottom:1px solid #1E2440;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo-box{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#6C63FF,#FF6584);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;letter-spacing:-1px;flex-shrink:0}
+.logo-title{font-weight:800;font-size:16px;line-height:1}
+.logo-sub{font-size:10px;color:#6B7280}
+.user-toggle{display:flex;gap:6px;background:#1A1F3A;border-radius:999px;padding:4px;flex-shrink:0}
+.user-btn{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;transition:all .2s;color:#9CA3AF}
+.user-btn.active{background:linear-gradient(90deg,#6C63FF,#FB7185);color:#fff}
+
+/* Content */
+.content{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:80px}
+
+/* Tabs */
+.tab-bar{display:flex;gap:8px;background:#1A1F3A;border-radius:16px;padding:4px}
+.tab-btn{flex:1;padding:9px 0;border-radius:12px;font-size:14px;font-weight:700;transition:all .2s;color:#6B7280}
+.tab-btn.active{background:#2E3460;color:#F0F4FF}
+
+/* Hero */
+.hero{border-radius:20px;background:linear-gradient(135deg,#1E1B4B,#312E81,#4C1D95);padding:20px;position:relative;overflow:hidden}
+.hero-orb1{position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:rgba(129,140,248,0.15);pointer-events:none}
+.hero-orb2{position:absolute;bottom:-30px;right:40px;width:80px;height:80px;border-radius:50%;background:rgba(251,113,133,0.1);pointer-events:none}
+.hero-greeting{font-size:13px;color:#A5B4FC;font-weight:600;margin-bottom:4px}
+.hero-title{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:14px}
+.countdown-row{display:flex;gap:8px;flex-wrap:wrap}
+.countdown-card{flex:1 1 130px;background:rgba(255,255,255,0.08);border-radius:14px;padding:12px}
+.countdown-card.english{border:1px solid rgba(129,140,248,0.3)}
+.countdown-card.cpns{border:1px solid rgba(251,113,133,0.3)}
+.cd-label{font-size:11px;font-weight:700;margin-bottom:4px}
+.cd-label.english{color:#A5B4FC}
+.cd-label.cpns{color:#FCA5A5}
+.cd-num{font-size:32px;font-weight:800;line-height:1}
+.cd-sub{font-size:11px}
+.cd-sub.english{color:#C7D2FE}
+.cd-sub.cpns{color:#FCA5A5}
+
+/* Date edit */
+.date-form{background:#1A1F3A;border:1px solid #2E3460;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.date-form-title{font-size:13px;font-weight:700;color:#818CF8}
+.date-row{display:flex;gap:10px;flex-wrap:wrap}
+.date-field{flex:1 1 160px}
+.date-field label{display:block;font-size:11px;color:#9CA3AF;margin-bottom:4px}
+.date-field input{width:100%;padding:8px 10px;border-radius:10px;background:#0F1221;border:1px solid #2E3460;color:#F0F4FF;font-size:13px}
+.btn-save{padding:9px;border-radius:10px;background:#2E3460;color:#F0F4FF;font-size:13px;font-weight:700;width:100%}
+.btn-edit{padding:8px 14px;border-radius:10px;background:#1A1F3A;border:1px solid #2E3460;color:#9CA3AF;font-size:12px;font-weight:600;text-align:left;width:100%}
+
+/* Info bar */
+.info-bar{border-radius:14px;background:#1A1F3A;border:1px solid #2E3460;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.info-icon{font-size:22px}
+.info-title{font-size:12px;font-weight:700;color:#FBBF24;margin-bottom:2px}
+.info-text{font-size:12px;color:#9CA3AF}
+
+/* Progress */
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.prog-title{font-size:16px;font-weight:800}
+.view-toggle{display:flex;gap:4px;background:#1A1F3A;border-radius:999px;padding:3px}
+.view-btn{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;transition:all .2s;color:#6B7280}
+.view-btn.active{background:#2E3460;color:#F0F4FF}
+.prog-cards{display:flex;flex-direction:column;gap:8px}
+.prog-card{border-radius:16px;padding:14px 16px}
+.prog-card-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prog-card-name{font-size:15px;font-weight:800}
+.prog-card-pct{font-size:13px;font-weight:800;opacity:.9}
+.prog-bar-track{height:10px;background:rgba(255,255,255,0.15);border-radius:999px;overflow:hidden;margin-bottom:6px}
+.prog-bar-fill{height:100%;border-radius:999px;background:rgba(255,255,255,0.8);transition:width .4s}
+.prog-card-label{font-size:12px;color:rgba(255,255,255,0.6)}
+.duo-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.duo-row:last-child{margin-bottom:0}
+.duo-name{width:52px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.7)}
+.duo-track{flex:1;height:9px;background:rgba(255,255,255,0.1);border-radius:999px;overflow:hidden}
+.duo-fill{height:100%;border-radius:999px;transition:width .4s}
+.duo-pct{width:34px;text-align:right;font-size:12px;font-weight:800}
+
+/* Weekly */
+.weekly-box{background:#1A1F3A;border:1px solid #2E3460;border-radius:16px;padding:14px}
+.weekly-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.weekly-title{font-size:14px;font-weight:800}
+.weekly-count{font-size:12px;color:#9CA3AF}
+.week-days{display:flex;gap:6px}
+.day-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;border:0;cursor:pointer;padding:0}
+.day-dot{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;transition:all .2s}
+.day-dot.done{background:linear-gradient(135deg,#059669,#34D399);color:#fff}
+.day-dot.empty{background:#1A1F3A;color:#374151;border:1px solid #2E3460}
+.day-label{font-size:11px;color:#6B7280}
+
+/* Goal chips */
+.goal-chips{display:flex;gap:8px;flex-wrap:wrap}
+.goal-chip{padding:8px 18px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid #2E3460;color:#9CA3AF;background:#1A1F3A}
+.goal-chip.active{border:0;color:#fff}
+
+/* Source grid */
+.section-header{border-radius:16px;padding:16px}
+.section-h-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.section-h-sub{font-size:13px;color:rgba(255,255,255,0.65)}
+.source-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.source-card{border-radius:16px;padding:14px;display:flex;flex-direction:column;color:#fff}
+.src-letter{font-size:28px;font-weight:800;margin-bottom:4px}
+.src-name{font-size:14px;font-weight:700;line-height:1.3;margin-bottom:3px}
+.src-desc{font-size:11px;color:rgba(255,255,255,0.55);margin-bottom:12px;flex:1}
+.src-link{display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;border-radius:10px;background:rgba(255,255,255,0.12);font-size:12px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.src-link:hover{opacity:.8}
+
+/* Tryout specifics */
+.src-score-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(0,0,0,0.2);border-radius:10px;margin-bottom:10px}
+.src-score-label{font-size:11px;color:rgba(255,255,255,0.55)}
+.src-score-val{font-size:16px;font-weight:800}
+
+/* Score chart */
+.score-box{background:#1A1F3A;border:1px solid #2E3460;border-radius:16px;padding:14px}
+.score-box-title{font-size:14px;font-weight:800;margin-bottom:12px}
+.chart-area{position:relative;height:120px;display:flex;align-items:flex-end;gap:10px;border-bottom:1px solid #2E3460}
+.chart-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+.chart-bar-val{font-size:11px;font-weight:800}
+.chart-bar{width:60%;max-width:44px;border-radius:8px 8px 0 0;transition:height .4s}
+.chart-labels{display:flex;gap:10px;margin-top:6px}
+.chart-label{flex:1;text-align:center;font-size:11px;color:#6B7280}
+.chart-target{position:absolute;left:0;right:0;border-top:2px dashed rgba(255,255,255,0.4);pointer-events:none}
+
+/* Score input modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:flex-end;justify-content:center}
+.modal-sheet{background:#1A1F3A;border-radius:24px 24px 0 0;padding:20px;width:100%;max-width:600px;display:flex;flex-direction:column;gap:14px}
+.modal-title{font-size:16px;font-weight:800}
+.modal-input{padding:12px 14px;border-radius:12px;background:#0F1221;border:1px solid #2E3460;color:#F0F4FF;font-size:16px;width:100%}
+.modal-row{display:flex;gap:8px}
+.btn-cancel{flex:1;padding:12px;border-radius:12px;background:#2E3460;color:#9CA3AF;font-size:14px;font-weight:700}
+.btn-confirm{flex:1;padding:12px;border-radius:12px;background:linear-gradient(90deg,#4F46E5,#7C3AED);color:#fff;font-size:14px;font-weight:700}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;background:#0F1221;border-top:1px solid #1E2440;padding:8px 16px 20px;display:flex;justify-content:center;gap:4px;z-index:10}
+.nav-btn{flex:1;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:opacity .2s}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:11px;font-weight:700;color:#4B5563;transition:color .2s}
+.nav-label.active{color:#818CF8}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:14px;color:#6B7280">Memuat data...</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Score Modal -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">Catat skor tryout</div>
+    <input class="modal-input" type="number" id="modal-input" placeholder="Masukkan skor kamu...">
+    <div class="modal-row">
+      <button class="btn-cancel" onclick="hideModal()">Batal</button>
+      <button class="btn-confirm" onclick="saveScore()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="logo-box">LB</div>
+      <div>
+        <div class="logo-title"><span style="color:#818CF8">Lolos</span><span style="color:#FB7185"> Bareng</span></div>
+        <div class="logo-sub">Belajar berdua, lolos bareng</div>
+      </div>
+    </div>
+    <div class="user-toggle">
+      <button class="user-btn active" id="btn-fahrul" onclick="setUser('fahrul')">Fahrul</button>
+      <button class="user-btn" id="btn-asfa" onclick="setUser('asfa')">Asfa</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-beranda" onclick="setTab('beranda')">🏠 Beranda</button>
+      <button class="tab-btn" id="tab-materi" onclick="setTab('materi')">📚 Materi</button>
+      <button class="tab-btn" id="tab-tryout" onclick="setTab('tryout')">✏️ Tryout</button>
+    </div>
+
+    <!-- === BERANDA === -->
+    <div id="page-beranda">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-orb1"></div>
+        <div class="hero-orb2"></div>
+        <div class="hero-greeting" id="hero-greeting">Halo, Fahrul! 👋</div>
+        <div class="hero-title">Semangat belajar<br>hari ini! 💪</div>
+        <div class="countdown-row">
+          <div class="countdown-card english">
+            <div class="cd-label english">⏱ TOEFL/IELTS</div>
+            <div class="cd-num" id="cd-english">—</div>
+            <div class="cd-sub english" id="cd-english-sub">Belum diisi · atur tanggal</div>
+          </div>
+          <div class="countdown-card cpns">
+            <div class="cd-label cpns">⏱ SKD CPNS</div>
+            <div class="cd-num" id="cd-cpns">—</div>
+            <div class="cd-sub cpns" id="cd-cpns-sub">Belum diisi · atur tanggal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit tanggal (tersembunyi default) -->
+      <div id="date-form" class="date-form" style="display:none;margin-top:14px">
+        <div class="date-form-title">✏️ Atur tanggal ujian</div>
+        <div class="date-row">
+          <div class="date-field">
+            <label>TOEFL/IELTS</label>
+            <input type="date" id="input-date-english" onchange="onDateChange()">
+          </div>
+          <div class="date-field">
+            <label>SKD CPNS</label>
+            <input type="date" id="input-date-cpns" onchange="onDateChange()">
+          </div>
+        </div>
+        <button class="btn-save" onclick="saveDates()">Simpan & Tutup</button>
+      </div>
+
+      <button class="btn-edit" style="margin-top:14px" onclick="toggleDateForm()">
+        ✏️ Atur tanggal ujian &amp; target skor
+      </button>
+
+      <!-- Info SKD -->
+      <div class="info-bar" style="margin-top:14px">
+        <div class="info-icon">📌</div>
+        <div>
+          <div class="info-title">Info SKD CPNS 2026</div>
+          <div class="info-text">TWK 30 soal · TIU 35 soal · TKP 45 soal · Target 450+ dari 550</div>
+        </div>
+      </div>
+
+      <!-- Progres -->
+      <div style="margin-top:14px">
+        <div class="prog-header">
+          <div class="prog-title">Progres belajar</div>
+          <div class="view-toggle">
+            <button class="view-btn active" id="btn-solo" onclick="setView('solo')">Sendiri</button>
+            <button class="view-btn" id="btn-duo" onclick="setView('duo')">Berdua</button>
+          </div>
+        </div>
+        <div class="prog-cards" id="prog-cards"><!-- diisi JS --></div>
+      </div>
+
+      <!-- Target mingguan -->
+      <div class="weekly-box" style="margin-top:14px">
+        <div class="weekly-header">
+          <div class="weekly-title">Target minggu ini</div>
+          <div class="weekly-count" id="weekly-count">0 / 7 hari</div>
+        </div>
+        <div class="week-days" id="week-days"><!-- diisi JS --></div>
+      </div>
+
+    </div><!-- /beranda -->
+
+    <!-- === MATERI / TRYOUT === -->
+    <div id="page-goal" style="display:none">
+      <div class="goal-chips" id="goal-chips"><!-- diisi JS --></div>
+      <div id="goal-content" style="margin-top:12px"><!-- diisi JS --></div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn" id="nav-beranda" onclick="setTab('beranda')">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label active">Beranda</div>
+    </button>
+    <button class="nav-btn" id="nav-materi" onclick="setTab('materi')">
+      <div class="nav-icon">📚</div>
+      <div class="nav-label">Materi</div>
+    </button>
+    <button class="nav-btn" id="nav-tryout" onclick="setTab('tryout')">
+      <div class="nav-icon">✏️</div>
+      <div class="nav-label">Tryout</div>
+    </button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// CONFIG — ganti API_URL setelah deploy Apps Script
+// =============================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbyJ3fa_2CNLAvdSD2K4JJT_NT8WrXVnzb_SJMkn4RdoCY-SWIoA3exMPdWjCOovbxmWSg/exec';
+
+// =============================================
+// STATE
+// =============================================
+let state = {
+  user: 'fahrul',
+  tab: 'beranda',
+  goal: 'cpns',
+  view: 'solo',
+  showDateForm: false,
+  dateEnglish: '',
+  dateCpns: '',
+  weekChecks: { fahrul: [0,0,0,0,0,0,0], asfa: [0,0,0,0,0,0,0] },
+  scores: {
+    fahrul: { cpns:[], toefl:[], ielts:[] },
+    asfa:   { cpns:[], toefl:[], ielts:[] }
+  },
+  prog: {
+    fahrul: { c1:0,c2:0,c3:0,c4:0,c5:0,t1:0,t2:0,t3:0,t4:0,i1:0,i2:0,i3:0 },
+    asfa:   { c1:0,c2:0,c3:0,c4:0,c5:0,t1:0,t2:0,t3:0,t4:0,i1:0,i2:0,i3:0 }
+  },
+  weekStart: '',
+  modalGoal: '',
+  modalSource: '',
+  loaded: false
+};
+
+// =============================================
+// DATA DEFINITIONS
+// =============================================
+const GOAL_DEF = {
+  cpns:  { name:'CPNS',  grad:'linear-gradient(135deg,#991B1B,#DC2626)', fill:'#F87171', progKeys:['c1','c2','c3','c4','c5'], progNames:['TWK','TIU','TKP','Wawasan','Kepribadian'] },
+  toefl: { name:'TOEFL', grad:'linear-gradient(135deg,#1E3A8A,#2563EB)', fill:'#60A5FA', progKeys:['t1','t2','t3','t4'], progNames:['Listening','Structure','Reading','Speaking'] },
+  ielts: { name:'IELTS', grad:'linear-gradient(135deg,#064E3B,#059669)', fill:'#34D399', progKeys:['i1','i2','i3'], progNames:['Listening','Reading','Writing/Speaking'] }
+};
+
+const MATERI_DEF = {
+  cpns:  [{ letter:'S', name:'Saku CPNS',  desc:'TWK · TIU · TKP lengkap',       url:'https://yudhapratama14.github.io/CPNS/',  grad:'linear-gradient(135deg,#1E3A8A,#4F46E5)' }],
+  toefl: [{ letter:'N', name:'Navia.id',   desc:'Alur belajar B1–B2 TOEFL',       url:'https://navia.id',                        grad:'linear-gradient(135deg,#064E3B,#059669)' }],
+  ielts: [{ letter:'N', name:'Navia.id',   desc:'Alur belajar IELTS lengkap',      url:'https://navia.id',                        grad:'linear-gradient(135deg,#4A044E,#9333EA)' }]
+};
+
+const TRYOUT_DEF = {
+  cpns:  [
+    { letter:'S', name:'SiapASN',  kind:'Tryout SKD penuh', url:'https://siapasn-cpns.web.app',  grad:'linear-gradient(135deg,#1E3A8A,#4F46E5)' },
+    { letter:'C', name:'CPNSLab',  kind:'Tryout SKD penuh', url:'https://www.cpnslab.id',          grad:'linear-gradient(135deg,#064E3B,#059669)' }
+  ],
+  toefl: [{ letter:'N', name:'Navia.id', kind:'Simulasi TOEFL', url:'https://navia.id', grad:'linear-gradient(135deg,#1E3A8A,#2563EB)' }],
+  ielts: [{ letter:'N', name:'Navia.id', kind:'Simulasi IELTS', url:'https://navia.id', grad:'linear-gradient(135deg,#4A044E,#9333EA)' }]
+};
+
+const SCORE_CFG = {
+  cpns:  { min:0, max:550, target:380 },
+  toefl: { min:0, max:120, target:90 },
+  ielts: { min:0, max:9,   target:7 }
+};
+
+const DAY_LABELS = ['S','S','R','K','J','S','M'];
+const NAMES = { fahrul:'Fahrul', asfa:'Asfa' };
+
+// =============================================
+// API
+// =============================================
+async function apiGet(action) {
+  const r = await fetch(`${API_URL}?action=${action}`);
+  return r.json();
+}
+
+async function apiPost(data) {
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return r.json();
+}
+
+function getMonday(d = new Date()) {
+  const day = new Date(d); day.setHours(0,0,0,0);
+  const diff = (day.getDay() + 6) % 7;
+  day.setDate(day.getDate() - diff);
+  return day.toISOString().slice(0,10);
+}
+
+async function loadData() {
+  if (false) {
+    // Mode offline — pakai data demo
+    state.scores = {
+      fahrul: { cpns:[310,335,352], toefl:[68,72,75], ielts:[5.5,6,6.5] },
+      asfa:   { cpns:[298,320,341], toefl:[64,70,73], ielts:[5.5,6,6] }
+    };
+    state.prog = {
+      fahrul: { c1:2,c2:2,c3:2,c4:1,c5:0,t1:2,t2:2,t3:1,t4:0,i1:1,i2:0,i3:0 },
+      asfa:   { c1:2,c2:1,c3:0,c4:0,c5:0,t1:2,t2:2,t3:2,t4:1,i1:2,i2:1,i3:0 }
+    };
+    state.weekStart = getMonday();
+    hideLoading();
+    render();
+    return;
+  }
+  try {
+    const data = await apiGet('getAll');
+    // Settings
+    if (data.settings) {
+      state.dateEnglish = data.settings.dateEnglish || '';
+      state.dateCpns    = data.settings.dateCpns    || '';
+    }
+    // Progress
+    if (data.progress) {
+      ['fahrul','asfa'].forEach(u => {
+        if (data.progress[u]) {
+          const all = {};
+          Object.entries(data.progress[u]).forEach(([goal, items]) => {
+            Object.entries(items).forEach(([k, v]) => { all[k] = v; });
+          });
+          state.prog[u] = { ...state.prog[u], ...all };
+        }
+      });
+    }
+    // Scores
+    if (data.scores) {
+      ['fahrul','asfa'].forEach(u => {
+        if (data.scores[u]) {
+          Object.entries(data.scores[u]).forEach(([goal, arr]) => {
+            state.scores[u][goal] = arr.map(x => x.score);
+          });
+        }
+      });
+    }
+    // Weekly
+    state.weekStart = data.weekly?.weekStart || getMonday();
+    if (data.weekly?.data) {
+      ['fahrul','asfa'].forEach(u => {
+        if (data.weekly.data[u]) state.weekChecks[u] = data.weekly.data[u];
+      });
+    }
+    hideLoading();
+    render();
+  } catch(e) {
+    console.error(e);
+    hideLoading();
+    showToast('Gagal memuat data, mode offline');
+    render();
+  }
+}
+
+// =============================================
+// HELPERS
+// =============================================
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const d = new Date(dateStr);
+  return Math.ceil((d - now) / 86400000);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return 'Belum diisi';
+  return new Date(dateStr).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function countFor(user, goal) {
+  const gd = GOAL_DEF[goal];
+  const p  = state.prog[user] || {};
+  let done = 0;
+  gd.progKeys.forEach(k => { if ((p[k]||0) === 2) done++; });
+  return { done, tot: gd.progKeys.length, pct: gd.progKeys.length ? Math.round(done/gd.progKeys.length*100) : 0 };
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading');
+  el.classList.add('hide');
+  setTimeout(() => el.style.display = 'none', 300);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// =============================================
+// ACTIONS
+// =============================================
+function setUser(u) {
+  state.user = u;
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+u).classList.add('active');
+  render();
+}
+
+function setTab(t) {
+  state.tab = t;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelectorAll('.nav-label').forEach(b => b.classList.remove('active'));
+  document.querySelector(`#nav-${t} .nav-label`).classList.add('active');
+  document.getElementById('page-beranda').style.display = t === 'beranda' ? '' : 'none';
+  document.getElementById('page-goal').style.display    = t !== 'beranda' ? '' : 'none';
+  if (t !== 'beranda') renderGoalPage();
+}
+
+function setView(v) {
+  state.view = v;
+  ['solo','duo'].forEach(x => {
+    const b = document.getElementById('btn-'+x);
+    b.classList.toggle('active', x === v);
+  });
+  renderProgress();
+}
+
+function toggleDateForm() {
+  state.showDateForm = !state.showDateForm;
+  const form = document.getElementById('date-form');
+  form.style.display = state.showDateForm ? '' : 'none';
+  if (state.showDateForm) {
+    document.getElementById('input-date-english').value = state.dateEnglish;
+    document.getElementById('input-date-cpns').value    = state.dateCpns;
+  }
+}
+
+function onDateChange() {
+  renderCountdown();
+}
+
+async function saveDates() {
+  state.dateEnglish = document.getElementById('input-date-english').value;
+  state.dateCpns    = document.getElementById('input-date-cpns').value;
+  toggleDateForm();
+  renderCountdown();
+  if (true) {
+    try {
+      await apiPost({ action:'saveSettings', settings:{ dateEnglish: state.dateEnglish, dateCpns: state.dateCpns }});
+      showToast('✓ Tanggal tersimpan');
+    } catch(e) { showToast('Gagal menyimpan ke server'); }
+  } else {
+    showToast('✓ Tanggal diperbarui (mode offline)');
+  }
+}
+
+async function toggleDay(i) {
+  const u = state.user;
+  const w = [...state.weekChecks[u]];
+  w[i] = w[i] ? 0 : 1;
+  state.weekChecks[u] = w;
+  renderWeekly();
+  if (true) {
+    try {
+      await apiPost({ action:'setWeekly', user:u, weekStart:state.weekStart, days:w });
+    } catch(e) {}
+  }
+}
+
+// Modal skor
+function showModal(goal, source) {
+  state.modalGoal   = goal;
+  state.modalSource = source;
+  document.getElementById('modal-title').textContent = `Catat skor ${GOAL_DEF[goal].name} (${source})`;
+  document.getElementById('modal-input').value = '';
+  document.getElementById('modal-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('modal-input').focus(), 100);
+}
+
+function hideModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) hideModal();
+}
+
+async function saveScore() {
+  const val = parseFloat(document.getElementById('modal-input').value);
+  if (isNaN(val)) { showToast('Masukkan angka yang valid'); return; }
+  const u = state.user;
+  state.scores[u][state.modalGoal].push(val);
+  hideModal();
+  renderGoalPage();
+  showToast('✓ Skor disimpan');
+  if (true) {
+    try {
+      await apiPost({ action:'addScore', user:u, goal:state.modalGoal, source:state.modalSource, score:val });
+    } catch(e) {}
+  }
+}
+
+// =============================================
+// RENDER
+// =============================================
+function render() {
+  renderHero();
+  renderCountdown();
+  renderProgress();
+  renderWeekly();
+  if (state.tab !== 'beranda') renderGoalPage();
+}
+
+function renderHero() {
+  document.getElementById('hero-greeting').textContent = `Halo, ${NAMES[state.user]}! 👋`;
+}
+
+function renderCountdown() {
+  const dE = state.showDateForm
+    ? daysUntil(document.getElementById('input-date-english')?.value || state.dateEnglish)
+    : daysUntil(state.dateEnglish);
+  const dC = state.showDateForm
+    ? daysUntil(document.getElementById('input-date-cpns')?.value || state.dateCpns)
+    : daysUntil(state.dateCpns);
+
+  document.getElementById('cd-english').textContent = dE !== null ? (dE >= 0 ? dE : 'Lewat') : '—';
+  document.getElementById('cd-cpns').textContent    = dC !== null ? (dC >= 0 ? dC : 'Lewat') : '—';
+  document.getElementById('cd-english-sub').textContent = dE !== null
+    ? (dE >= 0 ? `hari lagi · ${formatDate(state.dateEnglish)}` : formatDate(state.dateEnglish))
+    : 'Belum diisi · atur tanggal';
+  document.getElementById('cd-cpns-sub').textContent = dC !== null
+    ? (dC >= 0 ? `hari lagi · ${formatDate(state.dateCpns)}` : formatDate(state.dateCpns))
+    : 'Belum diisi · atur tanggal';
+}
+
+function renderProgress() {
+  const c = document.getElementById('prog-cards');
+  const goals = ['cpns','toefl','ielts'];
+  if (state.view === 'solo') {
+    c.innerHTML = goals.map(k => {
+      const gd = GOAL_DEF[k];
+      const { done, tot, pct } = countFor(state.user, k);
+      return `<div class="prog-card" style="background:${gd.grad}">
+        <div class="prog-card-title">
+          <div class="prog-card-name">${gd.name}</div>
+          <div class="prog-card-pct">${pct}%</div>
+        </div>
+        <div class="prog-bar-track"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+        <div class="prog-card-label">${done} dari ${tot} materi selesai</div>
+      </div>`;
+    }).join('');
+  } else {
+    c.innerHTML = goals.map(k => {
+      const gd = GOAL_DEF[k];
+      const a  = countFor('fahrul', k);
+      const b  = countFor('asfa', k);
+      return `<div class="prog-card" style="background:${gd.grad}">
+        <div class="prog-card-title"><div class="prog-card-name">${gd.name}</div></div>
+        <div class="duo-row">
+          <div class="duo-name">Fahrul</div>
+          <div class="duo-track"><div class="duo-fill" style="width:${a.pct}%;background:rgba(255,255,255,0.9)"></div></div>
+          <div class="duo-pct">${a.pct}%</div>
+        </div>
+        <div class="duo-row">
+          <div class="duo-name">Asfa</div>
+          <div class="duo-track"><div class="duo-fill" style="width:${b.pct}%;background:rgba(255,255,255,0.5)"></div></div>
+          <div class="duo-pct">${b.pct}%</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderWeekly() {
+  const w   = state.weekChecks[state.user];
+  const done = w.filter(Boolean).length;
+  document.getElementById('weekly-count').textContent = `${done} / 7 hari`;
+  document.getElementById('week-days').innerHTML = DAY_LABELS.map((l,i) =>
+    `<button class="day-btn" onclick="toggleDay(${i})">
+      <div class="day-dot ${w[i] ? 'done' : 'empty'}">${w[i] ? '✓' : ''}</div>
+      <div class="day-label">${l}</div>
+    </button>`
+  ).join('');
+}
+
+function renderGoalPage() {
+  const tab = state.tab;
+  const goal = state.goal;
+  const gd  = GOAL_DEF[goal];
+
+  // Goal chips
+  document.getElementById('goal-chips').innerHTML = ['cpns','toefl','ielts'].map(k =>
+    `<button class="goal-chip ${goal===k?'active':''}" ${goal===k?`style="background:${GOAL_DEF[k].grad};border:0"`:''}
+      onclick="setGoal('${k}')">${GOAL_DEF[k].name}</button>`
+  ).join('');
+
+  const c = document.getElementById('goal-content');
+
+  if (tab === 'materi') {
+    const sources = MATERI_DEF[goal];
+    c.innerHTML = `
+      <div class="section-header" style="background:${gd.grad}">
+        <div class="section-h-title">Materi ${gd.name}</div>
+        <div class="section-h-sub">Klik sumber → langsung ke situs aslinya</div>
+      </div>
+      <div class="source-grid" style="margin-top:10px">
+        ${sources.map(s => `
+          <div class="source-card" style="background:${s.grad}">
+            <div class="src-letter">${s.letter}</div>
+            <div class="src-name">${s.name}</div>
+            <div class="src-desc">${s.desc}</div>
+            <a href="${s.url}" target="_blank" rel="noopener" class="src-link">
+              Buka materi <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 9L9 3M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>`).join('')}
+      </div>`;
+
+  } else if (tab === 'tryout') {
+    const sources = TRYOUT_DEF[goal];
+    const userScores = state.scores[state.user][goal] || [];
+    const sc = SCORE_CFG[goal];
+    const H  = 100;
+
+    const bars = userScores.map((v,i) => {
+      const h = Math.round((v - sc.min) / (sc.max - sc.min) * H);
+      return `<div class="chart-bar-col">
+        <div class="chart-bar-val">${String(v).replace('.',',')}</div>
+        <div class="chart-bar" style="height:${h}px;background:${gd.fill}"></div>
+      </div>`;
+    });
+
+    const targetPct = Math.round((sc.target - sc.min) / (sc.max - sc.min) * H);
+
+    c.innerHTML = `
+      <div class="section-header" style="background:${gd.grad}">
+        <div class="section-h-title">Tryout ${gd.name}</div>
+        <div class="section-h-sub">Pilih sumber → tryout di situs aslinya → catat skor di sini</div>
+      </div>
+      <div class="source-grid" style="margin-top:10px">
+        ${sources.map((s,i) => {
+          const last = userScores[userScores.length-1];
+          return `<div class="source-card" style="background:${s.grad}">
+            <div class="src-letter">${s.letter}</div>
+            <div class="src-name">${s.name}</div>
+            <div class="src-score-row">
+              <span class="src-score-label">Skor terakhir</span>
+              <span class="src-score-val">${last !== undefined ? String(last).replace('.',',') : '—'}</span>
+            </div>
+            <a href="${s.url}" target="_blank" rel="noopener" class="src-link" style="margin-bottom:8px">
+              Buka tryout <svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 9L9 3M4 3h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="score-box" style="margin-top:10px">
+        <div class="score-box-title">Riwayat skor ${NAMES[state.user]}</div>
+        <div class="chart-area">
+          <div class="chart-target" style="bottom:${targetPct}px"></div>
+          ${bars.length ? bars.join('') : '<div style="color:#4B5563;font-size:13px;margin:auto">Belum ada skor</div>'}
+        </div>
+        <div class="chart-labels">
+          ${userScores.map((_,i) => `<div class="chart-label">TO ${i+1}</div>`).join('')}
+        </div>
+        <button onclick="showModal('${goal}','${sources[0]?.name||''}')" style="margin-top:12px;width:100%;padding:10px;border-radius:12px;background:linear-gradient(90deg,#4F46E5,#7C3AED);color:#fff;font-size:13px;font-weight:700">
+          + Catat skor baru
+        </button>
+      </div>`;
+  }
+}
+
+function setGoal(g) {
+  state.goal = g;
+  renderGoalPage();
+}
+
+// =============================================
+// INIT
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+});
+</script>
+</body>
+</html>
